@@ -34,8 +34,8 @@ def _chunks(l, n):
 		yield l[i:i + n]
 
 
-def _gcm_send(data, content_type):
-	key = SETTINGS.get("GCM_API_KEY")
+def _gcm_send(data, provider, content_type):
+	key = provider.gcm_api_key
 	if not key:
 		raise ImproperlyConfigured(
 			'You need to set PUSH_NOTIFICATIONS_SETTINGS["GCM_API_KEY"] to send messages through GCM.'
@@ -50,8 +50,8 @@ def _gcm_send(data, content_type):
 	return urlopen(request, timeout=SETTINGS["GCM_ERROR_TIMEOUT"]).read().decode("utf-8")
 
 
-def _fcm_send(data, content_type):
-	key = SETTINGS.get("FCM_API_KEY")
+def _fcm_send(data, provider, content_type):
+	key = provider.fcm_api_key
 	if not key:
 		raise ImproperlyConfigured(
 			'You need to set PUSH_NOTIFICATIONS_SETTINGS["FCM_API_KEY"] to send messages through FCM.'
@@ -66,7 +66,7 @@ def _fcm_send(data, content_type):
 	return urlopen(request, timeout=SETTINGS["FCM_ERROR_TIMEOUT"]).read().decode("utf-8")
 
 
-def _cm_send_plain(registration_id, data, cloud_type="GCM", **kwargs):
+def _cm_send_plain(registration_id, data, provider, cloud_type="GCM", **kwargs):
 	"""
 	Sends a GCM notification to a single registration_id or to a
 	topic (If "topic" included in the kwargs).
@@ -94,7 +94,7 @@ def _cm_send_plain(registration_id, data, cloud_type="GCM", **kwargs):
 		send_func = _fcm_send
 	else:
 		raise ImproperlyConfigured("cloud_type must be GCM or FCM not %r" % (cloud_type))
-	result = send_func(data, "application/x-www-form-urlencoded;charset=UTF-8")
+	result = send_func(data, provider, "application/x-www-form-urlencoded;charset=UTF-8")
 
 	# Information about handling response from Google docs
 	# (https://developers.google.com/cloud-messaging/http):
@@ -164,7 +164,7 @@ def _handler_cm_message_json(registration_ids, response_data, cloud_type):
 	return response
 
 
-def _cm_send_json(registration_ids, data, cloud_type="GCM", **kwargs):
+def _cm_send_json(registration_ids, data, provider, cloud_type="GCM", **kwargs):
 	"""
 	Sends a GCM notification to one or more registration_ids. The registration_ids
 	needs to be a list.
@@ -183,9 +183,9 @@ def _cm_send_json(registration_ids, data, cloud_type="GCM", **kwargs):
 	# Sort the keys for deterministic output (useful for tests)
 	data = json.dumps(values, separators=(",", ":"), sort_keys=True).encode("utf-8")
 	if cloud_type == "GCM":
-		response = json.loads(_gcm_send(data, "application/json"))
+		response = json.loads(_gcm_send(data, provider, "application/json"))
 	elif cloud_type == "FCM":
-		response = json.loads(_fcm_send(data, "application/json"))
+		response = json.loads(_fcm_send(data, provider, "application/json"))
 	else:
 		raise ImproperlyConfigured("cloud_type must be GCM or FCM not %s" % str(cloud_type))
 	return _handler_cm_message_json(registration_ids, response, cloud_type)
@@ -198,11 +198,11 @@ def _gcm_handle_canonical_id(canonical_id, current_id, cloud_type):
 	if GCMDevice.objects.filter(registration_id=canonical_id, cloud_message_type=cloud_type, active=True).exists():
 		GCMDevice.objects.filter(registration_id=current_id, cloud_message_type=cloud_type).update(active=False)
 	else:
-		GCMDevice.objects.filter(registration_id=current_id, cloud_message_type=cloud_type)\
+		GCMDevice.objects.filter(registration_id=current_id, cloud_message_type=cloud_type) \
 			.update(registration_id=canonical_id)
 
 
-def send_message(registration_id, data, cloud_type, **kwargs):
+def send_message(registration_id, data, provider, cloud_type, **kwargs):
 	"""
 	Sends a GCM or FCM notification to a single registration_id.
 
@@ -214,10 +214,10 @@ def send_message(registration_id, data, cloud_type, **kwargs):
 	"""
 
 	if registration_id:
-		return _cm_send_plain(registration_id, data, cloud_type, **kwargs)
+		return _cm_send_plain(registration_id, data, cloud_type, provider=provider, **kwargs)
 
 
-def send_bulk_message(registration_ids, data, cloud_type, **kwargs):
+def send_bulk_message(registration_ids, data, cloud_type, provider, **kwargs):
 	"""
 	Sends a GCM or FCM notification to one or more registration_ids. The registration_ids
 	needs to be a list.
@@ -241,7 +241,7 @@ def send_bulk_message(registration_ids, data, cloud_type, **kwargs):
 		if len(registration_ids) > max_recipients:
 			ret = []
 			for chunk in _chunks(registration_ids, max_recipients):
-				ret.append(_cm_send_json(chunk, data, cloud_type=cloud_type, **kwargs))
+				ret.append(_cm_send_json(chunk, data, provider=provider, cloud_type=cloud_type, **kwargs))
 			return ret
 
-	return _cm_send_json(registration_ids, data, cloud_type=cloud_type, **kwargs)
+	return _cm_send_json(registration_ids, data, provider=provider, cloud_type=cloud_type, **kwargs)
