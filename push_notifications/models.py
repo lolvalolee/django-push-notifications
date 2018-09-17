@@ -124,7 +124,7 @@ class APNSDevice(Device):
 	class Meta:
 		verbose_name = _("APNS device")
 
-	def send_message(self, message, **kwargs):
+	def send_message(self, message, provider, **kwargs):
 		from .apns import apns_send_message
 
 		return apns_send_message(registration_id=self.registration_id, alert=message, **kwargs)
