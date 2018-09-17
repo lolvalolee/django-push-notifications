@@ -41,7 +41,7 @@ class GCMDeviceManager(models.Manager):
 
 
 class GCMDeviceQuerySet(models.query.QuerySet):
-	def send_message(self, message, **kwargs):
+	def send_message(self, message, provider, **kwargs):
 		if self:
 			from .gcm import send_bulk_message
 
@@ -58,7 +58,7 @@ class GCMDeviceQuerySet(models.query.QuerySet):
 				)
 				if reg_ids:
 					r = send_bulk_message(
-						registration_ids=reg_ids, data=data, cloud_type=cloud_type, **kwargs
+						registration_ids=reg_ids, data=data, cloud_type=cloud_type, provider=provider, **kwargs
 					)
 					response.append(r)
 
@@ -84,7 +84,7 @@ class GCMDevice(Device):
 	class Meta:
 		verbose_name = _("GCM device")
 
-	def send_message(self, message, **kwargs):
+	def send_message(self, message, provider, **kwargs):
 		from .gcm import send_message
 
 		data = kwargs.pop("extra", {})
@@ -93,7 +93,7 @@ class GCMDevice(Device):
 
 		return send_message(
 			registration_id=self.registration_id, data=data,
-			cloud_type=self.cloud_message_type, **kwargs
+			cloud_type=self.cloud_message_type, provider=provider, **kwargs
 		)
 
 
@@ -103,11 +103,11 @@ class APNSDeviceManager(models.Manager):
 
 
 class APNSDeviceQuerySet(models.query.QuerySet):
-	def send_message(self, message, **kwargs):
+	def send_message(self, message, provider, **kwargs):
 		if self:
 			from .apns import apns_send_bulk_message
 			reg_ids = list(self.filter(active=True).values_list("registration_id", flat=True))
-			return apns_send_bulk_message(registration_ids=reg_ids, alert=message, **kwargs)
+			return apns_send_bulk_message(registration_ids=reg_ids, alert=message, provider=provider, **kwargs)
 
 
 class APNSDevice(Device):
