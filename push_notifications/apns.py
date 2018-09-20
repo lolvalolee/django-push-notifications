@@ -240,7 +240,7 @@ def _apns_receive_feedback(socket):
 	return expired_token_list
 
 
-def apns_send_message(registration_id, alert, **kwargs):
+def apns_send_message(registration_id, alert, provider, **kwargs):
 	"""
 	Sends an APNS notification to a single registration_id.
 	This will send the notification as form data.
@@ -252,7 +252,7 @@ def apns_send_message(registration_id, alert, **kwargs):
 	to this for silent notifications.
 	"""
 
-	return _apns_send(registration_id, alert, **kwargs)
+	return _apns_send(registration_id, alert, provider, **kwargs)
 
 
 def apns_send_bulk_message(registration_ids, alert, provider, **kwargs):

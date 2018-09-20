@@ -127,7 +127,7 @@ class APNSDevice(Device):
 	def send_message(self, message, provider, **kwargs):
 		from .apns import apns_send_message
 
-		return apns_send_message(registration_id=self.registration_id, alert=message, **kwargs)
+		return apns_send_message(self.registration_id, message, provider, **kwargs)
 
 
 class WNSDeviceManager(models.Manager):
