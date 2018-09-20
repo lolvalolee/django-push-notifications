@@ -35,7 +35,7 @@ def _chunks(l, n):
 
 
 def _gcm_send(data, provider, content_type):
-	key = provider.gcm_api_key
+	key = provider.providernotificationssettings.gcm_api_key
 	if not key:
 		raise ImproperlyConfigured(
 			'You need to set PUSH_NOTIFICATIONS_SETTINGS["GCM_API_KEY"] to send messages through GCM.'
@@ -51,7 +51,7 @@ def _gcm_send(data, provider, content_type):
 
 
 def _fcm_send(data, provider, content_type):
-	key = provider.fcm_api_key
+	key = provider.providernotificationssettings.fcm_api_key
 	if not key:
 		raise ImproperlyConfigured(
 			'You need to set PUSH_NOTIFICATIONS_SETTINGS["FCM_API_KEY"] to send messages through FCM.'

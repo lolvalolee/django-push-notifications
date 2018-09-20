@@ -65,7 +65,7 @@ def _check_certificate(ss):
 
 
 def _apns_create_socket(address_tuple, provider):
-	certfile = provider.apns_certificate.path
+	certfile = provider.providernotificationssettings.apns_certificate.path
 	if not certfile:
 		raise ImproperlyConfigured(
 			'You need to set PUSH_NOTIFICATIONS_SETTINGS["APNS_CERTIFICATE"] to send messages through APNS.'
