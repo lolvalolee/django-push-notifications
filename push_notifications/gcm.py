@@ -214,7 +214,7 @@ def send_message(registration_id, data, provider, cloud_type, **kwargs):
 	"""
 
 	if registration_id:
-		return _cm_send_plain(registration_id, data, cloud_type, provider=provider, **kwargs)
+		return _cm_send_plain(registration_id, data, provider, cloud_type, **kwargs)
 
 
 def send_bulk_message(registration_ids, data, cloud_type, provider, **kwargs):
@@ -241,7 +241,7 @@ def send_bulk_message(registration_ids, data, cloud_type, provider, **kwargs):
 		if len(registration_ids) > max_recipients:
 			ret = []
 			for chunk in _chunks(registration_ids, max_recipients):
-				ret.append(_cm_send_json(chunk, data, provider=provider, cloud_type=cloud_type, **kwargs))
+				ret.append(_cm_send_json(chunk, data, provider, cloud_type=cloud_type, **kwargs))
 			return ret
 
-	return _cm_send_json(registration_ids, data, provider=provider, cloud_type=cloud_type, **kwargs)
+	return _cm_send_json(registration_ids, data, provider, cloud_type=cloud_type, **kwargs)
